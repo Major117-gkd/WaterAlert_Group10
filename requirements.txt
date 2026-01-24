@@ -1,0 +1,6 @@
+python-telegram-bot
+streamlit
+pandas
+python-dotenv
+folium
+streamlit-folium
