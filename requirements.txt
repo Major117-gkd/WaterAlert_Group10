@@ -4,3 +4,4 @@ pandas
 python-dotenv
 folium
 streamlit-folium
+plotly

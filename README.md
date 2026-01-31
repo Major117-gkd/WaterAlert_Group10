@@ -1,55 +1,67 @@
 # WaterAlert 🚰
 
-WaterAlert est une application de signalement des fuites d’eau permettant aux citoyens d’envoyer des informations géolocalisées accompagnées de photos afin de faciliter l’intervention rapide des sociétés de distribution d’eau.
+WaterAlert est une solution professionnelle de gestion et de monitoring des fuites d'eau. Elle combine un Bot Telegram pour le signalement citoyen et un tableau de bord analytique avancé pour les gestionnaires.
 
-## Structure du Projet
+## 🚀 Fonctionnalités Professionnelles
+
+### 📊 Business Intelligence (BI)
+- **Tableau de bord interactif** : Visualisation en temps réel des indicateurs clés (KPIs).
+- **Analyses Stratégiques** : Graphiques Plotly pour le suivi des tendances, répartition par statut et sévérité.
+- **Exportation de données** : Extraction des signalements au format CSV pour reporting externe.
+
+### 🗺️ Intelligence Géographique
+- **Cartographie interactive** : Visualisation précise de chaque incident.
+- **Carte de chaleur (Heatmap)** : Identification des zones critiques pondérée par la sévérité des fuites.
+
+### 🛠️ Gestion Opérationnelle
+- **Assignation des techniciens** : Suivi nominatif des interventions.
+- **Cycle de vie des incidents** : Gestion complète des statuts (Signalé, En cours, Réparé).
+
+## 📂 Structure du Projet
 
 ```
 WaterAlert/
-├── data/               # Base de données SQLite
-├── uploads/            # Photos envoyées par les utilisateurs
+├── data/               # Base de données SQLite (Persistence)
 ├── src/
-│   ├── database/       # Logique DB (db_manager.py)
-│   ├── bot/            # Bot Telegram (telegram_bot.py)
-│   └── dashboard/      # Interface Streamlit (app.py)
-├── .env                # Variables d'environnement (Token Bot)
-└── requirements.txt    # Dépendances Python
+│   ├── database/       # Gestionnaire de base de données
+│   ├── bot/            # Intelligence du Bot Telegram
+│   └── dashboard/      # Frontend Streamlit & assets CSS
+├── streamlit_app.py    # Point d'entrée principal (Déploiement)
+├── verify_setup.py     # Script de diagnostic technique
+├── .env                # Configuration sécurisée (Token Bot)
+└── requirements.txt    # Dépendances du projet
 ```
 
-## Installation
+## 🛠️ Installation & Configuration
 
-1.  **Environnement virtuel :**
-    - **PowerShell :**
-      ```powershell
-      python -m venv venv
-      .\venv\Scripts\Activate.ps1
-      ```
-    - **CMD (Invite de commande) :**
-      ```cmd
-      python -m venv venv
-      .\venv\Scripts\activate.bat
-      ```
+1. **Préparation de l'environnement** :
+   ```powershell
+   python -m venv venv
+   .\venv\Scripts\Activate.ps1
+   pip install -r requirements.txt
+   ```
 
-2.  **Dépendances (après activation) :**
-    ```bash
-    pip install -r requirements.txt
-    ```
+2. **Configuration du Bot** :
+   - Créez votre bot via [@BotFather](https://t.me/botfather).
+   - Renseignez votre token dans le fichier `.env` : `TELEGRAM_BOT_TOKEN=...`.
 
-3.  **Configuration :**
-    - Créez un bot via [@BotFather](https://t.me/botfather) sur Telegram.
-    - Copiez le token dans le fichier `.env` : `TELEGRAM_BOT_TOKEN=VOTRE_TOKEN`.
+3. **Vérification du système** :
+   ```bash
+   python verify_setup.py
+   ```
 
-## Utilisation
+## 🖥️ Utilisation
 
-### 1. Lancer le Bot Telegram
+### Lancer le Service de Signalement (Bot)
 ```bash
 python src/bot/telegram_bot.py
 ```
-Le bot permettra aux citoyens d'envoyer une photo et leur position GPS.
 
-### 2. Lancer le Tableau de Bord Admin
+### Lancer la Console d'Administration (Dashboard)
 ```bash
-streamlit run src/dashboard/app.py
+python -m streamlit run streamlit_app.py
 ```
-L'administrateur peut visualiser les signalements sur une carte et mettre à jour leur statut (`Signalé`, `En cours`, `Réparé`).
-# WaterAlert_Groupe10
+
+## 🛡️ Sécurité & Déploiement
+- Le projet inclut un fichier `.gitignore` pré-configuré pour protéger vos données sensibles.
+- Compatible avec un déploiement sécurisé sur **Streamlit Cloud**.
