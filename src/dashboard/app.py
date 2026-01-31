@@ -85,7 +85,8 @@ def main():
     # Export Section in Sidebar
     st.sidebar.divider()
     st.sidebar.subheader("📥 Exportation")
-    csv = filtered_df.to_csv(index=False).encode('utf-8')
+    # Use utf-8-sig (with BOM) and semicolon for better Excel compatibility
+    csv = filtered_df.to_csv(index=False, sep=';').encode('utf-8-sig')
     st.sidebar.download_button(
         label="Télécharger les données (CSV)",
         data=csv,
