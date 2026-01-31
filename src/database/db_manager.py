@@ -25,6 +25,7 @@ class DBManager:
                     longitude REAL,
                     address TEXT,
                     severity TEXT DEFAULT 'Inconnue',
+                    ai_severity TEXT DEFAULT 'Inconnue',
                     technician TEXT,
                     status TEXT DEFAULT 'Signalé',
                     timestamp DATETIME DEFAULT CURRENT_TIMESTAMP
@@ -43,19 +44,23 @@ class DBManager:
                 cursor.execute("ALTER TABLE leaks ADD COLUMN severity TEXT DEFAULT 'Inconnue'")
                 print("Migration: Added 'severity' column to leaks table.")
             
+            if "ai_severity" not in columns:
+                cursor.execute("ALTER TABLE leaks ADD COLUMN ai_severity TEXT DEFAULT 'Inconnue'")
+                print("Migration: Added 'ai_severity' column to leaks table.")
+            
             if "technician" not in columns:
                 cursor.execute("ALTER TABLE leaks ADD COLUMN technician TEXT")
                 print("Migration: Added 'technician' column to leaks table.")
                 
             conn.commit()
 
-    def add_leak(self, user_id, user_name, photo_path, latitude, longitude, address=None, severity='Inconnue', technician=None):
+    def add_leak(self, user_id, user_name, photo_path, latitude, longitude, address=None, severity='Inconnue', ai_severity='Inconnue', technician=None):
         with self._get_connection() as conn:
             cursor = conn.cursor()
             cursor.execute('''
-                INSERT INTO leaks (user_id, user_name, photo_path, latitude, longitude, address, severity, technician)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-            ''', (user_id, user_name, photo_path, latitude, longitude, address, severity, technician))
+                INSERT INTO leaks (user_id, user_name, photo_path, latitude, longitude, address, severity, ai_severity, technician)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+            ''', (user_id, user_name, photo_path, latitude, longitude, address, severity, ai_severity, technician))
             conn.commit()
             return cursor.lastrowid
 
@@ -64,7 +69,7 @@ class DBManager:
             cursor = conn.cursor()
             query = '''
                 SELECT id, user_id, user_name, photo_path, latitude, longitude, 
-                       address, severity, technician, status, timestamp 
+                       address, severity, ai_severity, technician, status, timestamp 
                 FROM leaks 
                 ORDER BY timestamp DESC
             '''

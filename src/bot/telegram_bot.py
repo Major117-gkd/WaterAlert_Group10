@@ -16,6 +16,8 @@ from dotenv import load_dotenv
 
 # Specific fix for Windows asyncio issues with python-telegram-bot/httpx
 if sys.platform == 'win32':
+    import warnings
+    warnings.filterwarnings("ignore", category=DeprecationWarning)
     asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
 
 # Add src to path
@@ -33,7 +35,7 @@ logging.basicConfig(
 )
 
 TOKEN = os.getenv("TELEGRAM_BOT_TOKEN")
-PHOTO, LOCATION = range(2)
+PHOTO, SEVERITY, LOCATION = range(3)
 
 db = DBManager()
 
@@ -59,12 +61,41 @@ async def photo(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     
     # Run AI Analysis (Simulated)
     await update.message.reply_text("🔍 *Analyse de l'image par l'IA en cours...*", parse_mode='Markdown')
-    is_leak, severity, ai_msg = analyze_leak_image(file_path)
-    context.user_data['severity'] = severity
+    is_leak, ai_severity, ai_msg = analyze_leak_image(file_path)
+    context.user_data['ai_severity'] = ai_severity
+    
+    # Ask for user's input on severity
+    reply_keyboard = [
+        ["💧 Petite (Goutte à goutte)"],
+        ["🌊 Moyenne (Filet d'eau)"],
+        ["🆘 Élevée (Geyser / Inondation)"]
+    ]
     
     await update.message.reply_text(
         f"{ai_msg}\n\n"
-        "Maintenant, veuillez envoyer votre **localisation** (GPS) pour confirmer le signalement.",
+        "Pourriez-vous confirmer la **gravité** de la fuite en choisissant une option ci-dessous ?",
+        reply_markup=ReplyKeyboardMarkup(
+            reply_keyboard, one_time_keyboard=True, resize_keyboard=True
+        ),
+        parse_mode='Markdown'
+    )
+    return SEVERITY
+
+async def severity_choice(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
+    choice = update.message.text
+    # Map the choice to a simpler string for the database
+    if "Petite" in choice:
+        severity = "Petite"
+    elif "Moyenne" in choice:
+        severity = "Moyenne"
+    else:
+        severity = "Élevée"
+        
+    context.user_data['user_severity'] = severity
+    
+    await update.message.reply_text(
+        "C'est noté. Maintenant, veuillez envoyer votre **localisation** (GPS) pour confirmer le signalement.",
+        reply_markup=ReplyKeyboardRemove(),
         parse_mode='Markdown'
     )
     return LOCATION
@@ -74,7 +105,8 @@ async def location(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     user_location = update.message.location
     
     photo_path = context.user_data.get('photo_path')
-    severity = context.user_data.get('severity', 'Inconnue')
+    severity = context.user_data.get('user_severity', 'Inconnue')
+    ai_severity = context.user_data.get('ai_severity', 'Inconnue')
     
     # Get readable address
     await update.message.reply_chat_action("find_location")
@@ -87,7 +119,8 @@ async def location(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
         latitude=user_location.latitude,
         longitude=user_location.longitude,
         address=address,
-        severity=severity
+        severity=severity,
+        ai_severity=ai_severity
     )
     
     await update.message.reply_text(
@@ -155,6 +188,7 @@ if __name__ == '__main__':
         ],
         states={
             PHOTO: [MessageHandler(filters.PHOTO, photo)],
+            SEVERITY: [MessageHandler(filters.TEXT & ~filters.COMMAND, severity_choice)],
             LOCATION: [MessageHandler(filters.LOCATION, location)],
         },
         fallbacks=[CommandHandler('cancel', cancel)],

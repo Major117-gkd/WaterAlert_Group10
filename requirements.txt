@@ -5,3 +5,5 @@ python-dotenv
 folium
 streamlit-folium
 plotly
+google-generativeai
+geopy

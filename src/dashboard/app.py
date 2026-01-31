@@ -45,7 +45,9 @@ def main():
 
     # Data Processing
     num_cols = len(leaks[0])
-    if num_cols == 11:
+    if num_cols == 12:
+        cols = ['ID', 'User ID', 'Citoyen', 'Photo', 'Lat', 'Lon', 'Adresse', 'Sévérité', 'IA Sévérité', 'Technicien', 'Statut', 'Date']
+    elif num_cols == 11:
         cols = ['ID', 'User ID', 'Citoyen', 'Photo', 'Lat', 'Lon', 'Adresse', 'Sévérité', 'Technicien', 'Statut', 'Date']
     elif num_cols == 10:
         cols = ['ID', 'User ID', 'Citoyen', 'Photo', 'Lat', 'Lon', 'Adresse', 'Sévérité', 'Statut', 'Date']
@@ -157,7 +159,11 @@ def main():
                     """)
                     
                     severity = row.get('Sévérité', 'Inconnue')
-                    st.markdown(f"**⚠️ Sévérité:** {severity}")
+                    ai_severity = row.get('IA Sévérité', 'Inconnue')
+                    
+                    st.markdown(f"**👤 Citoyen:** {severity}")
+                    if ai_severity != severity and ai_severity != "Inconnue":
+                        st.markdown(f"**🤖 IA (Vérification):** {ai_severity}")
 
                     # Technician and Status Update
                     col_tech, col_stat = st.columns(2)
