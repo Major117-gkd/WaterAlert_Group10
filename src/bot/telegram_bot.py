@@ -40,31 +40,95 @@ PHOTO, SEVERITY, LOCATION = range(3)
 db = DBManager()
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
+    await update.message.reply_chat_action("typing")
     await update.message.reply_text(
-        "Bienvenue chez WaterAlert ! 🚰\n"
-        "Pour signaler une fuite d'eau, veuillez envoyer une **photo** de la fuite.",
-        parse_mode='Markdown'
+        "👋 **Bienvenue sur WaterAlert !**\n\n"
+        "Je suis votre assistant intelligent pour la protection de nos ressources en eau. "
+        "Ensemble, agissons rapidement contre les fuites.\n\n"
+        "📸 Pour commencer, envoyez-moi une **photo** de la fuite.\n\n"
+        "💡 _Tapez /help pour voir le guide ou utilisez le Menu en bas à gauche._",
+        parse_mode='Markdown',
+        reply_markup=ReplyKeyboardRemove()
     )
     return PHOTO
+
+async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    await update.message.reply_chat_action("typing")
+    help_text = (
+        "📖 **Guide d'utilisation WaterAlert**\n\n"
+        "1️⃣ **Photo** : Envoyez une photo claire de la fuite.\n"
+        "2️⃣ **Analyse** : L'IA évalue la gravité en quelques secondes.\n"
+        "3️⃣ **Gravité** : Confirmez le niveau de sévérité.\n"
+        "4️⃣ **Position** : Partagez votre position GPS.\n\n"
+        "📌 **Commandes :**\n"
+        "/start - Signaler une fuite\n"
+        "/status - État de mes signalements\n"
+        "/about - En savoir plus sur le projet\n"
+        "/privacy - Protection de vos données\n"
+        "/cancel - Annuler"
+    )
+    await update.message.reply_text(help_text, parse_mode='Markdown')
+
+async def about(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    await update.message.reply_chat_action("typing")
+    text = (
+        "🌍 **À propos de WaterAlert**\n\n"
+        "WaterAlert est une initiative citoyenne et technologique visant à réduire le gaspillage d'eau potable. "
+        "Grâce à l'Intelligence Artificielle de Google Gemini, nous traitons vos signalements en temps réel "
+        "pour prioriser les interventions d'urgence.\n\n"
+        "📡 **Technologie** : Python, FastAPI, Streamlit, IA Vision.\n"
+        "🤝 **Partenariat** : Collaboration avec les services techniques municipaux."
+    )
+    await update.message.reply_text(text, parse_mode='Markdown')
+
+async def privacy(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    await update.message.reply_chat_action("typing")
+    text = (
+        "🛡️ **Protection des Données (RGPD)**\n\n"
+        "Vos données sont traitées avec le plus grand respect :\n"
+        "• **Photos** : Utilisées uniquement pour l'analyse de la fuite.\n"
+        "• **Position** : Utilisée exclusivement pour localiser la fuite.\n"
+        "• **Identité** : Seul votre nom public Telegram est enregistré.\n\n"
+        "Vous pouvez demander la suppression de vos données à tout moment via /contact."
+    )
+    await update.message.reply_text(text, parse_mode='Markdown')
+
+async def contact(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    await update.message.reply_chat_action("typing")
+    text = (
+        "✉️ **Contact & Support**\n\n"
+        "Une question ? Un problème technique ?\n"
+        "Contactez l'équipe WaterAlert :\n"
+        "📧 Email : `support@wateralert.tech` (exemple)\n"
+        "📱 Telegram : @WaterAlertSupport"
+    )
+    await update.message.reply_text(text, parse_mode='Markdown')
 
 async def photo(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     user = update.message.from_user
     photo_file = await update.message.photo[-1].get_file()
     
-    # Create uploads directory if it doesn't exist
     os.makedirs("uploads", exist_ok=True)
-    
     file_path = f"uploads/{user.id}_{photo_file.file_unique_id}.jpg"
     await photo_file.download_to_drive(file_path)
-    
     context.user_data['photo_path'] = file_path
     
-    # Run AI Analysis (Simulated)
-    await update.message.reply_text("🔍 *Analyse de l'image par l'IA en cours...*", parse_mode='Markdown')
+    await update.message.reply_chat_action("typing")
+    await update.message.reply_text("🔍 *Analyse IA en cours... Merci de patienter.*", parse_mode='Markdown')
+    
     is_leak, ai_severity, ai_msg = analyze_leak_image(file_path)
+    
+    await update.message.reply_chat_action("typing")
+    if not is_leak:
+        await update.message.reply_text(
+            f"{ai_msg}\n\n"
+            "⚠️ Désolé, l'IA n'a pas détecté de fuite évidente. Envoyez une **autre photo** ou tapez /cancel.",
+            parse_mode='Markdown'
+        )
+        return PHOTO
+
     context.user_data['ai_severity'] = ai_severity
     
-    # Ask for user's input on severity
     reply_keyboard = [
         ["💧 Petite (Goutte à goutte)"],
         ["🌊 Moyenne (Filet d'eau)"],
@@ -73,7 +137,7 @@ async def photo(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     
     await update.message.reply_text(
         f"{ai_msg}\n\n"
-        "Pourriez-vous confirmer la **gravité** de la fuite en choisissant une option ci-dessous ?",
+        "Veuillez confirmer la **gravité** observée :",
         reply_markup=ReplyKeyboardMarkup(
             reply_keyboard, one_time_keyboard=True, resize_keyboard=True
         ),
@@ -83,18 +147,12 @@ async def photo(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
 
 async def severity_choice(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     choice = update.message.text
-    # Map the choice to a simpler string for the database
-    if "Petite" in choice:
-        severity = "Petite"
-    elif "Moyenne" in choice:
-        severity = "Moyenne"
-    else:
-        severity = "Élevée"
-        
+    severity = "Petite" if "Petite" in choice else "Moyenne" if "Moyenne" in choice else "Élevée"
     context.user_data['user_severity'] = severity
     
+    await update.message.reply_chat_action("typing")
     await update.message.reply_text(
-        "C'est noté. Maintenant, veuillez envoyer votre **localisation** (GPS) pour confirmer le signalement.",
+        "📍 Parfait. Veuillez maintenant envoyer votre **localisation** GPS via l'icône 📎.",
         reply_markup=ReplyKeyboardRemove(),
         parse_mode='Markdown'
     )
@@ -108,7 +166,6 @@ async def location(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     severity = context.user_data.get('user_severity', 'Inconnue')
     ai_severity = context.user_data.get('ai_severity', 'Inconnue')
     
-    # Get readable address
     await update.message.reply_chat_action("find_location")
     address = get_address(user_location.latitude, user_location.longitude)
     
@@ -123,39 +180,18 @@ async def location(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
         ai_severity=ai_severity
     )
     
+    await update.message.reply_chat_action("typing")
+    reply_keyboard = [["🆕 Nouveau signalement"], ["📊 Mes signalements"]]
+    
     await update.message.reply_text(
-        f"Merci ! Votre signalement à l'adresse suivante a été enregistré :\n📍 *{address}*\n\n"
-        "Nos équipes interviendront dès que possible. 🚀",
+        f"✅ **Signalement validé !**\n\n"
+        f"📍 Adresse : _{address}_\n"
+        "Nos services ont été alertés. Merci pour votre engagement citoyen ! 🚀",
         parse_mode='Markdown',
-        reply_markup=ReplyKeyboardRemove()
+        reply_markup=ReplyKeyboardMarkup(
+            reply_keyboard, one_time_keyboard=True, resize_keyboard=True
+        )
     )
-    return ConversationHandler.END
-
-async def cancel(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
-    await update.message.reply_text(
-        "Signalement annulé.",
-        reply_markup=ReplyKeyboardRemove()
-    )
-    return ConversationHandler.END
-
-async def status(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
-    user = update.message.from_user
-    leaks = db.get_user_leaks(user.id)
-    
-    if not leaks:
-        await update.message.reply_text("Vous n'avez aucun signalement en cours. Tapez /start pour signaler une fuite !")
-        return ConversationHandler.END
-        
-    response = "*Mes signalements :*\n\n"
-    for l in leaks:
-        # DB schema: id, user_id, user_name, photo_path, lat, lon, address, severity, technician, status, date
-        id_l, _, _, _, _, _, addr, sev, tech, stat, date = l
-        response += f"🆔 `#{id_l}` | {stat}\n📍 {addr[:40]}...\n⚠️ Sévérité: {sev}\n"
-        if tech:
-            response += f"👷 Technicien: {tech}\n"
-        response += "---\n"
-    
-    await update.message.reply_text(response, parse_mode='Markdown')
     return ConversationHandler.END
 
 async def send_status_notification(user_id, leak_id, new_status):
@@ -169,6 +205,60 @@ async def send_status_notification(user_id, leak_id, new_status):
     async with ApplicationBuilder().token(TOKEN).build() as app:
         await app.bot.send_message(chat_id=user_id, text=msg.format(leak_id, new_status), parse_mode='Markdown')
 
+async def unknown(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    """Handle unknown messages or random text."""
+    await update.message.reply_chat_action("typing")
+    await update.message.reply_text(
+        "🤔 Je n'ai pas bien compris.\n\n"
+        "Pour signaler une fuite d'eau, utilisez /start ou le bouton **Menu** en bas à gauche. 🚰",
+        parse_mode='Markdown'
+    )
+
+async def cancel(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
+    await update.message.reply_chat_action("typing")
+    await update.message.reply_text(
+        "Signalement annulé. Vous pouvez recommencer à tout moment.",
+        reply_markup=ReplyKeyboardRemove()
+    )
+    return ConversationHandler.END
+
+async def status(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
+    await update.message.reply_chat_action("typing")
+    user = update.message.from_user
+    leaks = db.get_user_leaks(user.id)
+    
+    if not leaks:
+        await update.message.reply_text("Vous n'avez aucun signalement actif. Utilisez /start pour agir !")
+        return ConversationHandler.END
+        
+    response = "📊 **Vos signalements :**\n\n"
+    for l in leaks:
+        id_l, _, _, _, _, _, addr, sev, tech, stat, date = l
+        response += f"🆔 `#{id_l}` | {stat}\n📍 {addr[:40]}...\n⚠️ {sev}\n---\n"
+    
+    await update.message.reply_text(response, parse_mode='Markdown')
+    return ConversationHandler.END
+
+async def post_init(application) -> None:
+    """Setup bot professional profile and menu on startup."""
+    from telegram import BotCommand
+    commands = [
+        BotCommand("start", "Signaler une nouvelle fuite"),
+        BotCommand("status", "Voir mes signalements"),
+        BotCommand("about", "À propos de WaterAlert"),
+        BotCommand("help", "Guide d'utilisation"),
+        BotCommand("contact", "Contacter le support"),
+        BotCommand("privacy", "Protection des données"),
+        BotCommand("cancel", "Annuler l'action")
+    ]
+    await application.bot.set_my_commands(commands)
+    # Set bot description (shown in profile and chat start)
+    await application.bot.set_my_description(
+        "L'assistant citoyen pour signaler les fuites d'eau en temps réel. "
+        "Utilisant l'IA pour sauver nos ressources précieuses."
+    )
+    await application.bot.set_my_short_description("Signalez les fuites d'eau avec l'IA 🚰")
+
 async def error_handler(update: object, context: ContextTypes.DEFAULT_TYPE) -> None:
     logging.error(f"Exception while handling an update: {context.error}")
 
@@ -177,14 +267,22 @@ if __name__ == '__main__':
         print("Erreur : Veuillez configurer TELEGRAM_BOT_TOKEN dans le fichier .env")
         exit(1)
         
-    # Set increased timeouts for slow networks
     request = HTTPXRequest(connect_timeout=20, read_timeout=20)
-    app = ApplicationBuilder().token(TOKEN).request(request).build()
+    app = ApplicationBuilder().token(TOKEN).request(request).post_init(post_init).build()
 
+    # Global commands
+    app.add_handler(CommandHandler('help', help_command))
+    app.add_handler(CommandHandler('status', status))
+    app.add_handler(CommandHandler('about', about))
+    app.add_handler(CommandHandler('privacy', privacy))
+    app.add_handler(CommandHandler('contact', contact))
+    app.add_handler(MessageHandler(filters.Regex("^📊 Mes signalements$"), status))
+    app.add_handler(MessageHandler(filters.Regex("^🆕 Nouveau signalement$"), start))
+    
     conv_handler = ConversationHandler(
         entry_points=[
             CommandHandler('start', start),
-            CommandHandler('status', status)
+            MessageHandler(filters.Regex("^🆕 Nouveau signalement$"), start),
         ],
         states={
             PHOTO: [MessageHandler(filters.PHOTO, photo)],
@@ -192,9 +290,11 @@ if __name__ == '__main__':
             LOCATION: [MessageHandler(filters.LOCATION, location)],
         },
         fallbacks=[CommandHandler('cancel', cancel)],
+        allow_reentry=True
     )
 
     app.add_handler(conv_handler)
+    app.add_handler(MessageHandler(filters.TEXT & (~filters.COMMAND), unknown))
     app.add_error_handler(error_handler)
     
     print("Bot is running...")

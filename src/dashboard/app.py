@@ -116,7 +116,8 @@ def main():
         with col1:
             st.subheader("📍 Carte Interactive")
             if not filtered_df.empty:
-                m = folium.Map(location=[filtered_df['Lat'].mean(), filtered_df['Lon'].mean()], zoom_start=12)
+                # Basic map initialization
+                m = folium.Map()
                 
                 if show_heatmap:
                     # Severity weights for HeatMap
@@ -141,7 +142,10 @@ def main():
                             icon=folium.Icon(color=color, icon='info-sign')
                         ).add_to(m)
                 
-                st_folium(m, height=500, width='stretch')
+                # Automatically adjust zoom to show all markers/data
+                m.fit_bounds(filtered_df[['Lat', 'Lon']].values.tolist())
+                
+                st_folium(m, height=500, use_container_width=True)
             else:
                 st.warning("Aucune donnée à afficher sur la carte avec les filtres actuels.")
 

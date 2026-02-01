@@ -7,3 +7,6 @@ streamlit-folium
 plotly
 google-generativeai
 geopy
+reportlab
+fastapi
+uvicorn
