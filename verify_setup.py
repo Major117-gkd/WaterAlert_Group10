@@ -31,10 +31,11 @@ def test_database():
     # Test status update
     db.update_leak_status(leak_id, "En cours")
     updated_leak = db.get_leak_by_id(leak_id)
-    if updated_leak[6] == "En cours":
+    # Status is the 11th column (index 10) according to the schema in db_manager.py
+    if updated_leak[10] == "En cours":
         print("[OK] Mise a jour de statut reussie")
     else:
-        print(f"[ERREUR] Echec de la mise a jour (Statut actuel: {updated_leak[6]})")
+        print(f"[ERREUR] Echec de la mise a jour (Statut actuel: {updated_leak[10]})")
         return False
     
     # Cleanup test db
@@ -64,6 +65,6 @@ def test_files():
 if __name__ == "__main__":
     test_files()
     if test_database():
-        print("\n✅ TOUT FONCTIONNE ! Le systeme est pret.")
+        print("\n[OK] TOUT FONCTIONNE ! Le systeme est pret.")
     else:
-        print("\n❌ DES ERREURS ONT ETE DETECTEES.")
+        print("\n[ERREUR] DES ERREURS ONT ETE DETECTEES.")
