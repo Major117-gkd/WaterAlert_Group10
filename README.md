@@ -41,17 +41,26 @@ WaterAlert/
 
 ## 🛠️ Installation & Configuration
 
-1. **Préparation** :
+1. **Préparation (Environnement recommandé)** :
    ```powershell
+   # Création d'un nouvel environnement si nécessaire
    python -m venv venv
    .\venv\Scripts\Activate.ps1
    pip install -r requirements.txt
    ```
+   *Note : Si vous rencontrez des problèmes avec `venv`, vous pouvez installer les dépendances globalement ou via l'espace utilisateur.*
 
 2. **Variables d'environnement (.env)** :
+   Créez un fichier `.env` à la racine (déjà présent et configuré dans votre espace actuel) :
    ```env
-   TELEGRAM_BOT_TOKEN=votretolken
-   GEMINI_API_KEY=votreclefgoogle  # Optionnel pour l'IA réelle
+   TELEGRAM_BOT_TOKEN=votre_token_botfather
+   GEMINI_API_KEY=votre_cle_google_ai_studio
+   ```
+
+3. **Vérification du système** :
+   Lancez le script de diagnostic pour valider votre installation :
+   ```powershell
+   python verify_setup.py
    ```
 
 ## 🖥️ Utilisation
