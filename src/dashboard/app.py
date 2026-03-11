@@ -162,10 +162,14 @@ def main():
                     if os.path.exists(row['Photo']):
                         st.image(row['Photo'], use_container_width=True)
                     
+                    google_maps_url = f"https://www.google.com/maps/dir/?api=1&destination={row['Lat']},{row['Lon']}"
+                    
                     st.markdown(f"""
                     **👤 Citoyen:** {row['Citoyen']}  
                     **📍 Adresse:** {row.get('Adresse', 'N/A')}  
                     **⏳ Date:** {row.get('Date', 'N/A')}
+                    
+                    [🗺️ Voir l'itinéraire (Google Maps)]({google_maps_url})
                     """)
                     
                     severity = row.get('Sévérité', 'Inconnue')
