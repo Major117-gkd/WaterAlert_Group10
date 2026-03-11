@@ -10,3 +10,4 @@ geopy
 reportlab
 fastapi
 uvicorn
+streamlit-autorefresh

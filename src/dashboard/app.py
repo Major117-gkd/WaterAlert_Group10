@@ -8,6 +8,7 @@ import plotly.graph_objects as go
 import os
 import sys
 from datetime import datetime
+from streamlit_autorefresh import st_autorefresh
 
 # Add src to path
 sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
@@ -25,6 +26,10 @@ def main():
         page_icon="🚰",
         layout="wide"
     )
+    
+    # Auto-refresh every 10 seconds (10000 milliseconds)
+    st_autorefresh(interval=10000, key="data_refresh")
+    
     load_css()
 
     db = DBManager()
